@@ -1,0 +1,20 @@
+{
+  "name": "chainwatch",
+  "version": "0.0.1",
+  "description": "A webapp that detects anomalous blockchain activity.",
+  "main": "index.js",
+  "scripts": {
+    "test": "ls"
+  },
+  "keywords": [
+    "blockchain",
+    "crypto",
+    "ethereum",
+    "web3js"
+  ],
+  "author": "Michael Man",
+  "license": "MIT",
+  "dependencies": {
+    "npm": "^6.9.0"
+  }
+}
