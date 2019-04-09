@@ -1,8 +1,8 @@
 const Web3 = require('web3');
 
 //const web3 = new Web3(new Web3.providers.HttpProvider('ropsten.infura.io/v3/049b7dcda02c49f1904ede5d30eda304'));
-//const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
-const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+//const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
 
 
 calculateDistribution(100);
@@ -11,6 +11,9 @@ calculateDistribution(100);
 //https://ropsten.etherscan.io/stat/miner/1?range=1&blocktype=blocks
 
 async function calculateDistribution(numBlocks){
+
+	let miners = {};
+
 	const latest = await web3.eth.getBlockNumber();
 	console.log("Block Height: " + latest);
 
@@ -20,9 +23,17 @@ async function calculateDistribution(numBlocks){
 
 		let miner = block.miner;
 
+		if(miner in miners){
+			miners[miner]++;
+		} else {
+			miners[miner] = 1;
+		}
+
 		console.log(blockNo, miner);
 	}
 
+	console.log(miners);
+	return miners;
 }
 
 async function getNetworkStats(
