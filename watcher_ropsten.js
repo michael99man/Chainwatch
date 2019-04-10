@@ -62,4 +62,4 @@ async function getNetworkStats(
     });
 }
 
-module.exports.launch = launch();
+module.exports.launch = function (){ launch() };

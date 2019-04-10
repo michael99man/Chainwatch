@@ -1,9 +1,8 @@
 {
 
-	"ropsten":{
+	"ropsten": {
 		"provider": "http://localhost:8545",
 		"window_size": 100,
-		"refresh_rate": 15000,
-
+		"refresh_rate": 15000
 	}
 }

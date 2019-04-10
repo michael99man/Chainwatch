@@ -5,6 +5,6 @@ ropsten.launch();
 
 
 // to do later! (figure out overloading)
-export class Watcher(){
+class Watcher {
 
 }
