@@ -8,14 +8,37 @@ var web3;
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://mainnet.infura.io/ws"));
 
+var window_chain = {
+	start: -1,
+	end: -1,
+	blocks: {}
+};
 
 // placeholder constructor
 async function launch(){
-	web3 = new Web3(new Web3.providers.HttpProvider(options[provider]));
+	web3 = new Web3(new Web3.providers.HttpProvider(options.provider));
+
+	updateWindow();
+
 	setInterval(function() {
 	  console.log("I am doing my 15 sec check");
 	  // do your stuff here
 	}, options.refresh_rate);
+}
+
+
+async function updateWindow(){
+	const latest = await web3.eth.getBlockNumber();
+
+	if(window_chain.start == -1){
+		for(var i=0; i<options.window_size; i++){
+			let blockNo = latest-i;
+			let block = await web3.eth.getBlock(blockNo);
+
+			window_chain.blocks[blockNo] = {miner: block.miner, hash: block.hash};
+		}
+	}
+	console.log(window_chain);
 }
 
 
