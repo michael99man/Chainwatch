@@ -5,5 +5,4 @@ http.createServer(function (req, res) {
   res.end('Hello World\n');
 }).listen(8080, 'localhost');
 
-
 console.log('Server running at http://localhost:8080/');

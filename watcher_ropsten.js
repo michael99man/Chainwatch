@@ -1,16 +1,25 @@
+const config = require('./config.json');
+const network = "ropsten";
+const options = config[network];
+
 const Web3 = require('web3');
 
-//const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+var web3;
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
-const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://mainnet.infura.io/ws"));
-
-calculateDistribution(100);
+//const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://mainnet.infura.io/ws"));
 
 
-//https://ropsten.etherscan.io/stat/miner/1?range=1&blocktype=blocks
+// placeholder constructor
+async function launch(){
+	web3 = new Web3(new Web3.providers.HttpProvider(options[provider]));
+	setInterval(function() {
+	  console.log("I am doing my 15 sec check");
+	  // do your stuff here
+	}, options.refresh_rate);
+}
+
 
 async function calculateDistribution(numBlocks){
-
 	let miners = {};
 
 	const latest = await web3.eth.getBlockNumber();
@@ -52,3 +61,5 @@ async function getNetworkStats(
       "hashrate": difficulty / blockTime,
     });
 }
+
+module.exports.launch = launch();
