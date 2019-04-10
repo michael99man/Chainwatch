@@ -1,9 +1,8 @@
 const Web3 = require('web3');
 
-//const web3 = new Web3(new Web3.providers.HttpProvider('ropsten.infura.io/v3/049b7dcda02c49f1904ede5d30eda304'));
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
+//const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'));
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
-
+const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://mainnet.infura.io/ws"));
 
 calculateDistribution(100);
 
@@ -23,6 +22,7 @@ async function calculateDistribution(numBlocks){
 
 		let miner = block.miner;
 
+		// tally the miners
 		if(miner in miners){
 			miners[miner]++;
 		} else {
