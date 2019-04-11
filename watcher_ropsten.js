@@ -36,7 +36,7 @@ async function tick(){
 	var new_window = await updateWindow(window_chain);
 	console.log("New: " + new_window);
 	window_chain = new_window;
-	setTimeout(function(){tick()}, 1000);
+	setTimeout(function(){tick()}, options.refresh_rate);
 }
 
 // function updates the window based on whether the chain has progressed since
@@ -67,18 +67,19 @@ async function updateWindow(window){
 	} else {
 		// update window 
 		console.log("New window: (" + new_window.start + "-" + new_window.end + ")");
-
+		var numCopied = 0;
 		for(var blockNo=new_window.start; blockNo<=new_window.end; blockNo++){
 			// is in original window
 			if(blockNo in window.blocks){
-				console.log("Cloning: " + blockNo);
 				new_window.blocks[blockNo] = window.blocks[blockNo];
+				numCopied++;
 			} else {
 				console.log("Adding new entry: " + blockNo);
 				var block = await web3.eth.getBlock(blockNo);
 				new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash}
 			}
 		}
+		console.log("Cloned %d blocks", numCopied);
 	}
 	//console.log(new_window);
 	return new_window;
