@@ -45,12 +45,11 @@ async function launch(){
 async function tick(){
 	console.log("Tick".blue);
 	var new_window = await updateWindow(window_chain);
-	console.log(("New: " + new_window).blue);
 	window_chain = new_window;
 	setTimeout(function(){tick()}, options.refresh_rate);
 }
 
-// function updates the window based on whether the chain has progressed since
+// function updates the window based on whether the chain has progressed since the last tick
 async function updateWindow(window){
 	console.log(colors.green("Updating window, size %d"), options.window_size);
 	console.log(("Window num blocks: " + Object.keys(window.blocks).length).green);
@@ -73,8 +72,18 @@ async function updateWindow(window){
 		}
 		console.log(colors.green("Initialized with %d blocks"), Object.keys(new_window.blocks).length);
 	} else if(window.end == latest) {
+		new_window = window;
+		// UNcle?????!!
+		var lastBlock = await web3.eth.getBlock(blockNo);
+		var i = blockNo;
+		while(lastBlock.hash != window.blocks[i].hash){
+			new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
+			console.log(colors.red("MISMATCH: %d (Chain: %s vs Window: %s)"), i, lastBlock.hash, window.blocks[i].hash);
+			i--;
+			lastBlock = await web3.eth.getBlock(i);
+		}
+		
 		console.log(colors.green("Window up-to-date (%d-%d)"), window.start, window.end);
- 		new_window = window;
 	} else {
 		// update window 
 		console.log(colors.green("New window: (" + new_window.start + "-" + new_window.end + ")"));
@@ -96,6 +105,16 @@ async function updateWindow(window){
 	return new_window;
 }
 
+function compareWindows(oldWindow, newWindow){
+	// possibilities:
+	// windows are same length (same window.end) -> check last 
+	// 
+}
+
+
+
+
+/* --------------------------- Utility Functions ------------------------- */
 
 async function calculateDistribution(numBlocks){
 	let miners = {};
