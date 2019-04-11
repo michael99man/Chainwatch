@@ -1,4 +1,5 @@
 const config = require('./config.json');
+require('dotenv').config();
 const network = "ropsten";
 const options = config[network];
 
@@ -16,29 +17,71 @@ var window_chain = {
 
 // placeholder constructor
 async function launch(){
-	web3 = new Web3(new Web3.providers.HttpProvider(options.provider));
 
-	updateWindow();
+	console.log("Launching in debug mode: " + process.env.DEBUG);
 
-	setInterval(function() {
-	  console.log("I am doing my 15 sec check");
-	  // do your stuff here
-	}, options.refresh_rate);
+	if(process.env.DEBUG){
+		console.log("Debug mode: using Infura Web3 Provider");
+		web3 = await new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
+	} else {
+		web3 = await new Web3(new Web3.providers.HttpProvider(options.provider));
+	}
+
+	tick();
 }
 
+// updates window + checks validity
+async function tick(){
+	console.log("Tick");
+	var new_window = await updateWindow(window_chain);
+	console.log("New: " + new_window);
+	window_chain = new_window;
+	setTimeout(function(){tick()}, 1000);
+}
 
-async function updateWindow(){
+// function updates the window based on whether the chain has progressed since
+async function updateWindow(window){
+	console.log("Updating window, size %d", options.window_size);
+	console.log("Window num blocks: " + Object.keys(window.blocks).length);
 	const latest = await web3.eth.getBlockNumber();
 
-	if(window_chain.start == -1){
+	// update window
+	var new_window = {
+		start: latest-options.window_size+1,
+		end: latest,
+		blocks: {}
+	};
+
+	if(window.start == -1){
+		console.log("Init");
+		// form window for entire range
 		for(var i=0; i<options.window_size; i++){
 			let blockNo = latest-i;
 			let block = await web3.eth.getBlock(blockNo);
+			new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash};
+		}
+		console.log("Initialized with %d blocks", Object.keys(new_window.blocks).length);
+	} else if(window.end == latest) {
+		console.log("Window up-to-date (%d-%d)", window.start, window.end);
+ 		new_window = window;
+	} else {
+		// update window 
+		console.log("New window: (" + new_window.start + "-" + new_window.end + ")");
 
-			window_chain.blocks[blockNo] = {miner: block.miner, hash: block.hash};
+		for(var blockNo=new_window.start; blockNo<=new_window.end; blockNo++){
+			// is in original window
+			if(blockNo in window.blocks){
+				console.log("Cloning: " + blockNo);
+				new_window.blocks[blockNo] = window.blocks[blockNo];
+			} else {
+				console.log("Adding new entry: " + blockNo);
+				var block = await web3.eth.getBlock(blockNo);
+				new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash}
+			}
 		}
 	}
-	console.log(window_chain);
+	//console.log(new_window);
+	return new_window;
 }
 
 
