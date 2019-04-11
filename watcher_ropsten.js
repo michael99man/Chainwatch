@@ -99,8 +99,8 @@ async function updateWindow(window){
 				new_window.blocks[blockNo] = window.blocks[blockNo];
 				numCopied++;
 			} else {
-				console.log(colors.green("Adding new entry: " + blockNo));
 				var block = await web3.eth.getBlock(blockNo);
+				console.log(colors.green("Added new entry: %d (Hash: %s)"), blockNo, block.hash);
 				new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash}
 			}
 		}
