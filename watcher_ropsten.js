@@ -29,7 +29,7 @@ var window_chain = {
 // placeholder constructor
 async function launch(){
 
-	console.log(("Launching in debug mode: " + process.env.DEBUG).yellow);
+	console.log(("Launching in debug mode: " + (process.env.DEBUG == true)).yellow);
 
 	if(process.env.DEBUG){
 		console.log("Debug mode: using Infura Web3 Provider".yellow);
@@ -74,15 +74,15 @@ async function updateWindow(window){
 	} else if(window.end == latest) {
 		new_window = window;
 		// UNcle?????!!
-		var lastBlock = await web3.eth.getBlock(blockNo);
-		var i = blockNo;
+		var lastBlock = await web3.eth.getBlock(latest);
+		var i = latest;
 		while(lastBlock.hash != window.blocks[i].hash){
 			new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
 			console.log(colors.red("MISMATCH: %d (Chain: %s vs Window: %s)"), i, lastBlock.hash, window.blocks[i].hash);
 			i--;
 			lastBlock = await web3.eth.getBlock(i);
 		}
-		
+
 		console.log(colors.green("Window up-to-date (%d-%d)"), window.start, window.end);
 	} else {
 		// update window 
