@@ -10,8 +10,8 @@ const Web3 = require('web3');
 /*
 * COLOR LEGEND
 * Yellow: Init, Startup
-* Blue: Updating/Refresh
-* Green: Window Changes
+* Blue: Refresh
+* Green: Window Updates
 * Red: Errors
 */
 
@@ -45,6 +45,7 @@ async function launch(){
 async function tick(){
 	console.log("Tick".blue);
 	var new_window = await updateWindow(window_chain);
+	compareWindows(window_chain, new_window);
 	window_chain = new_window;
 	setTimeout(function(){tick()}, options.refresh_rate);
 }
@@ -77,6 +78,7 @@ async function updateWindow(window){
 		var lastBlock = await web3.eth.getBlock(latest);
 		var i = latest;
 		while(lastBlock.hash != window.blocks[i].hash){
+			// overwrite mismatched blocks
 			new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
 			console.log(colors.red("MISMATCH: %d (Chain: %s vs Window: %s)"), i, lastBlock.hash, window.blocks[i].hash);
 			i--;
@@ -109,6 +111,26 @@ function compareWindows(oldWindow, newWindow){
 	// possibilities:
 	// windows are same length (same window.end) -> check last 
 	// 
+	console.log(colors.blue("Comparing windows"));
+	var startPoint = -1;
+	if(oldWindow.end == newWindow.end){
+		// scan windows starting from the end
+		startPoint = oldWindow.end;
+	} else if (newWindow.end > oldWindow.end) {
+		startPoint = oldWindow.end;
+	} else {
+		console.log(colors.red("Window length mismatch, Old:(%d-%d), New:(%d-%d)"), oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
+	}
+
+	var i = startPoint;
+	while(oldWindow.blocks[i].hash != newWindow.blocks[i].hash){
+		console.log(colors.red("Hash mismatch: (%d, %d)"))
+		i--;
+	}
+
+
+	// Scanning
+
 }
 
 
