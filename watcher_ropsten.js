@@ -1,9 +1,20 @@
 const config = require('./config.json');
 require('dotenv').config();
+var colors = require('colors');
 const network = "ropsten";
 const options = config[network];
 
 const Web3 = require('web3');
+
+
+/*
+* COLOR LEGEND
+* Yellow: Init, Startup
+* Blue: Updating/Refresh
+* Green: Window Changes
+* Red: Errors
+*/
+
 
 var web3;
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
@@ -18,10 +29,10 @@ var window_chain = {
 // placeholder constructor
 async function launch(){
 
-	console.log("Launching in debug mode: " + process.env.DEBUG);
+	console.log(("Launching in debug mode: " + process.env.DEBUG).yellow);
 
 	if(process.env.DEBUG){
-		console.log("Debug mode: using Infura Web3 Provider");
+		console.log("Debug mode: using Infura Web3 Provider".yellow);
 		web3 = await new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
 	} else {
 		web3 = await new Web3(new Web3.providers.HttpProvider(options.provider));
@@ -32,17 +43,17 @@ async function launch(){
 
 // updates window + checks validity
 async function tick(){
-	console.log("Tick");
+	console.log("Tick".blue);
 	var new_window = await updateWindow(window_chain);
-	console.log("New: " + new_window);
+	console.log(("New: " + new_window).blue);
 	window_chain = new_window;
 	setTimeout(function(){tick()}, options.refresh_rate);
 }
 
 // function updates the window based on whether the chain has progressed since
 async function updateWindow(window){
-	console.log("Updating window, size %d", options.window_size);
-	console.log("Window num blocks: " + Object.keys(window.blocks).length);
+	console.log(colors.green("Updating window, size %d"), options.window_size);
+	console.log(("Window num blocks: " + Object.keys(window.blocks).length).green);
 	const latest = await web3.eth.getBlockNumber();
 
 	// update window
@@ -53,20 +64,20 @@ async function updateWindow(window){
 	};
 
 	if(window.start == -1){
-		console.log("Init");
+		console.log("Init".green);
 		// form window for entire range
 		for(var i=0; i<options.window_size; i++){
 			let blockNo = latest-i;
 			let block = await web3.eth.getBlock(blockNo);
 			new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash};
 		}
-		console.log("Initialized with %d blocks", Object.keys(new_window.blocks).length);
+		console.log(colors.green("Initialized with %d blocks"), Object.keys(new_window.blocks).length);
 	} else if(window.end == latest) {
-		console.log("Window up-to-date (%d-%d)", window.start, window.end);
+		console.log(colors.green("Window up-to-date (%d-%d)"), window.start, window.end);
  		new_window = window;
 	} else {
 		// update window 
-		console.log("New window: (" + new_window.start + "-" + new_window.end + ")");
+		console.log(colors.green("New window: (" + new_window.start + "-" + new_window.end + ")"));
 		var numCopied = 0;
 		for(var blockNo=new_window.start; blockNo<=new_window.end; blockNo++){
 			// is in original window
@@ -74,12 +85,12 @@ async function updateWindow(window){
 				new_window.blocks[blockNo] = window.blocks[blockNo];
 				numCopied++;
 			} else {
-				console.log("Adding new entry: " + blockNo);
+				console.log(colors.green("Adding new entry: " + blockNo));
 				var block = await web3.eth.getBlock(blockNo);
 				new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash}
 			}
 		}
-		console.log("Cloned %d blocks", numCopied);
+		console.log(colors.green("Cloned %d blocks"), numCopied);
 	}
 	//console.log(new_window);
 	return new_window;
