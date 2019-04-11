@@ -45,7 +45,10 @@ async function launch(){
 async function tick(){
 	console.log("Tick".blue);
 	var new_window = await updateWindow(window_chain);
-	compareWindows(window_chain, new_window);
+
+	// if not first window
+	if(window_chain.start != -1) compareWindows(window_chain, new_window);
+
 	window_chain = new_window;
 	setTimeout(function(){tick()}, options.refresh_rate);
 }
