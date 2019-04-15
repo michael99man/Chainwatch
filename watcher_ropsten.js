@@ -63,6 +63,13 @@ async function updateWindow(window){
 		console.log(colors.green("Updating window, size %d"), options.window_size);
 		console.log(("Window num blocks: " + Object.keys(window.blocks).length).green);
 	}
+
+	var timestamp = Date.now();
+
+	if(timestamp % 600000 == 0){
+		console.log("Tick: " + new Date().toLocaleString());
+	}
+	
 	const latest = await web3.eth.getBlockNumber();
 
 	// update window
