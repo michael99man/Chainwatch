@@ -20,6 +20,9 @@ var web3;
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
 //const web3 = new Web3(new Web3.providers.WebsocketProvider("wss://mainnet.infura.io/ws"));
 
+
+var debug = false;
+
 var window_chain = {
 	start: -1,
 	end: -1,
@@ -32,6 +35,7 @@ async function launch(){
 	console.log(("Launching in debug mode: " + (process.env.DEBUG == true)).yellow);
 
 	if(process.env.DEBUG){
+		debug = true;
 		console.log("Debug mode: using Infura Web3 Provider".yellow);
 		web3 = await new Web3(new Web3.providers.WebsocketProvider("wss://ropsten.infura.io/ws"));
 	} else {
@@ -43,7 +47,7 @@ async function launch(){
 
 // updates window + checks validity
 async function tick(){
-	console.log("Tick".blue);
+	//console.log("Tick".blue);
 	var new_window = await updateWindow(window_chain);
 
 	// if not first window
@@ -55,8 +59,10 @@ async function tick(){
 
 // function updates the window based on whether the chain has progressed since the last tick
 async function updateWindow(window){
-	console.log(colors.green("Updating window, size %d"), options.window_size);
-	console.log(("Window num blocks: " + Object.keys(window.blocks).length).green);
+	if(debug){
+		console.log(colors.green("Updating window, size %d"), options.window_size);
+		console.log(("Window num blocks: " + Object.keys(window.blocks).length).green);
+	}
 	const latest = await web3.eth.getBlockNumber();
 
 	// update window
@@ -67,7 +73,7 @@ async function updateWindow(window){
 	};
 
 	if(window.start == -1){
-		console.log("Init".green);
+		console.log("Init Window".green);
 		// form window for entire range
 		for(var i=0; i<options.window_size; i++){
 			let blockNo = latest-i;
@@ -88,10 +94,10 @@ async function updateWindow(window){
 			lastBlock = await web3.eth.getBlock(i);
 		}
 
-		console.log(colors.green("Window up-to-date (%d-%d)"), window.start, window.end);
+		if(debug) console.log(colors.green("Window up-to-date (%d-%d)"), window.start, window.end);
 	} else {
 		// update window 
-		console.log(colors.green("New window: (" + new_window.start + "-" + new_window.end + ")"));
+		if(debug) console.log(colors.green("New window: (" + new_window.start + "-" + new_window.end + ")"));
 		var numCopied = 0;
 		for(var blockNo=new_window.start; blockNo<=new_window.end; blockNo++){
 			// is in original window
@@ -100,11 +106,11 @@ async function updateWindow(window){
 				numCopied++;
 			} else {
 				var block = await web3.eth.getBlock(blockNo);
-				console.log(colors.green("Added new entry: %d (Hash: %s)"), blockNo, block.hash);
+				if(debug) console.log(colors.green("Added new entry: %d (Hash: %s)"), blockNo, block.hash);
 				new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash}
 			}
 		}
-		console.log(colors.green("Cloned %d blocks"), numCopied);
+		if(debug) console.log(colors.green("Cloned %d blocks"), numCopied);
 	}
 	//console.log(new_window);
 	return new_window;
@@ -114,7 +120,7 @@ function compareWindows(oldWindow, newWindow){
 	// possibilities:
 	// windows are same length (same window.end) -> check last 
 	// 
-	console.log(colors.blue("Comparing windows"));
+	if(debug) console.log(colors.blue("Comparing windows"));
 	var startPoint = -1;
 	if(oldWindow.end == newWindow.end){
 		// scan windows starting from the end
@@ -122,7 +128,7 @@ function compareWindows(oldWindow, newWindow){
 	} else if (newWindow.end > oldWindow.end) {
 		startPoint = oldWindow.end;
 	} else {
-		console.log(colors.red("Window length mismatch, Old:(%d-%d), New:(%d-%d)"), oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
+		if(debug) console.log(colors.red("Window length mismatch, Old:(%d-%d), New:(%d-%d)"), oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
 	}
 
 	var i = startPoint;
@@ -132,7 +138,7 @@ function compareWindows(oldWindow, newWindow){
 	}
 
 
-	// Scanning
+	// Scanning previous blocks
 
 }
 
