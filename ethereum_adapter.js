@@ -1,17 +1,14 @@
-const config = require('./config.json');
-require('dotenv').config();
-var colors = require('colors');
-const network = "ropsten";
-const options = config[network];
-
 const Web3 = require('web3');
 
+module.exports = class Ethereum {
 
-module.exports = class Ropsten {
+	constructor(){
+		this.network = "ethereum";
+	}
 
-	async initProvider(url, debug){
-		if(debug){
-			console.log("Debug mode: using Infura Web3 Provider".yellow);
+	async initProvider(url, fallback){
+		if(fallback){
+			console.log("Fallback mode: using Infura Web3 Provider".yellow);
 			this.web3 = await new Web3(new Web3.providers.WebsocketProvider(url));
 		} else {
 			this.web3 = await new Web3(new Web3.providers.HttpProvider(url));
@@ -31,6 +28,4 @@ module.exports = class Ropsten {
 		block.hash = b.hash;
 		return block;
 	}
-
-
 }

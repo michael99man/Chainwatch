@@ -3,26 +3,24 @@ require('dotenv').config();
 var colors = require('colors');
 const Web3 = require('web3');
 
-/*
-* COLOR LEGEND
-* Yellow: Init, Startup
-* Blue: Refresh
-* Green: Window Updates
-* Red: Errors
-*/
+/*********************************************************
+Watcher.js provides generalized engine logic for detecting
+suspicious chain reorganizations. It is designed to be used
+with adapter classes for each public blockchain you wish
+to monitor.
 
+Adapters must implement the following:
+	initProvider(url:location of provider, fallback:t/f) -> void
+	getBlock(n:block number) -> {blockNo, miner, hash}
+	blockHeight() -> integer
+
+**********************************************************/
 
 module.exports = class Watcher {
-	/* 
-	getProvider(debug?)
-	getBlock(n)
-	blockHeight
-	
-	*/
 
-	constructor(e, n){
-		this.engine = e;
-		this.network = n;
+	constructor(a){
+		this.adapter = a;
+		this.network = a.network;
 		this.options = config[this.network];
 		this.debug = false;
 		this.window_chain = {
@@ -32,28 +30,26 @@ module.exports = class Watcher {
 		};
 		this.prevTimestamp = 0;
 
-		console.log(("Launching " + this.network + " watcher in debug mode: " + (process.env.DEBUG == true)).yellow);
+		this.debug = (process.env.DEBUG == true);
+		this.fallback = (process.env.FALLBACK == true);
 
-		if(process.env.DEBUG){
-			this.debug = true;
-			this.engine.initProvider(this.options.fallback_provider, this.debug).then(()=>this.tick());
-		} else {
-			this.engine.initProvider(this.options.provider, this.debug).then(()=>this.tick());
-		}
+		// use an external fallback provider or local IPC endpoint	
+		var providerUrl = this.fallback ? this.options.fallback_provider : this.options.provider;
+
+		this.print("Launching %s watcher, (debug mode: %s)", colors.yellow, this.network, this.debug.toString());
+		this.adapter.initProvider(providerUrl, this.fallback).then(()=>this.tick());
 	}
 
 	// updates window + checks validity
 	async tick(){
-		this.debugPrint("Tick",colors.blue);
-
 		// handling printing ticks 
 		var timestamp = Date.now();
-
-		if(timestamp - this.prevTimestamp > this.options.tick_rate){
+		if(timestamp - this.prevTimestamp > this.options.tick_rate || this.debug){
 			this.print("Tick: %s", colors.blue, new Date().toLocaleString());
 			this.prevTimestamp = timestamp;
 		}
 
+		// update the window, receiving a new object
 		var new_window = await this.updateWindow(this.window_chain);
 
 		// if not first window
@@ -66,9 +62,9 @@ module.exports = class Watcher {
 
 	// function updates the window based on whether the chain has progressed since the last tick
 	async updateWindow(window){
-		this.debugPrint("Updating window (current: %d-%d), size: %d", colors.green, window.start, window.end, Object.keys(window.blocks).length);
+		this.debugPrint("Updating window (current: %d-%d, size: %d)", colors.green, window.start, window.end, Object.keys(window.blocks).length);
 
-		const latest = await this.engine.getBlockNumber();
+		const latest = await this.adapter.getBlockNumber();
 
 		// update window
 		var new_window = {
@@ -77,12 +73,12 @@ module.exports = class Watcher {
 			blocks: {}
 		};
 
-		if(window.start == -1){
-			console.log("Init Window".green);
+		if(window.start == 0){
+			this.print("Initializing window of %d blocks", colors.green, this.options.window_size);
 			// form window for entire range
 			for(var i=0; i<this.options.window_size; i++){
 				let blockNo = latest-i;
-				let block = await this.engine.getBlock(blockNo);
+				let block = await this.adapter.getBlock(blockNo);
 				new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash};
 			}
 			this.print("Initialized with %d blocks", colors.green, Object.keys(new_window.blocks).length);
@@ -90,7 +86,7 @@ module.exports = class Watcher {
 			new_window = window;
 			// Potential for a chain reorg (of the same length) here??
 
-			var lastBlock = await this.engine.getBlock(latest);
+			var lastBlock = await this.adapter.getBlock(latest);
 			var i = latest;
 
 			// starting from the end, check if still up to date
@@ -99,13 +95,14 @@ module.exports = class Watcher {
 				new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
 				this.print("MISMATCH: %d (Chain: %s vs Window: %s)", colors.red, i, lastBlock.hash, window.blocks[i].hash);
 				i--;
-				lastBlock = await this.engine.getBlock(i);
+				lastBlock = await this.adapter.getBlock(i);
 			}
 
 			this.debugPrint("Window up-to-date (%d-%d)", colors.green, window.start, window.end);
 		} else {
 			// Chain has grown, update window by copying old blocks first
-			if(this.debug) console.log(colors.green("Shifting window to: (" + new_window.start + "-" + new_window.end + ")"));
+			this.debugPrint("Shifting window to: (%d-%d)", colors.green, new_window.start,new_window.end);
+
 			var numCopied = 0;
 			for(var blockNo=new_window.start; blockNo<=new_window.end; blockNo++){
 				// is in original window
@@ -113,12 +110,12 @@ module.exports = class Watcher {
 					new_window.blocks[blockNo] = window.blocks[blockNo];
 					numCopied++;
 				} else {
-					var block = await this.engine.getBlock(blockNo);
+					var block = await this.adapter.getBlock(blockNo);
 					this.debugPrint("Added new entry: %d (Hash: %s)", colors.green, blockNo, block.hash);
 					new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash}
 				}
 			}
-			if(this.debug) console.log(colors.green("Cloned %d blocks"), numCopied);
+			this.debugPrint("Cloned %d blocks", colors.green, numCopied);
 		}
 		return new_window;
 	}
@@ -127,7 +124,7 @@ module.exports = class Watcher {
 		// possibilities:
 		// windows are same length (same window.end) -> check last 
 		// 
-		if(this.debug) console.log(colors.blue("Comparing windows"));
+		this.debugPrint("Comparing windows...", colors.blue);
 
 		var startPoint = -1;
 		if(oldWindow.end == newWindow.end){
@@ -136,12 +133,12 @@ module.exports = class Watcher {
 		} else if (newWindow.end > oldWindow.end) {
 			startPoint = oldWindow.end;
 		} else {
-			console.log(colors.red("Window length mismatch, Old:(%d-%d), New:(%d-%d)"), oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
+			this.print("Window length mismatch, Old:(%d-%d), New:(%d-%d)", colors.red, oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
 		}
 
 		var i = startPoint;
 		while(oldWindow.blocks[i].hash != newWindow.blocks[i].hash){
-			console.log(colors.red("Hash mismatch: (%d, %d)"))
+			this.print("Hash mismatch: (%s, %s)", colors.red, oldWindow.blocks[i].hash, newWindow.blocks[i].hash);
 			i--;
 		}
 
@@ -150,6 +147,14 @@ module.exports = class Watcher {
 
 	}
 
+	/*********************************************************
+	* COLOR LEGEND
+	* Yellow: Init, Startup
+	* Blue: Refresh
+	* Green: Window Updates
+	* Red: Errors
+	**********************************************************/
+
 	debugPrint(str,color, ...args){
 		if(!this.debug) return;
 
@@ -157,10 +162,8 @@ module.exports = class Watcher {
 	}
 
 	print(str,color, ...args){
-		console.log(color(str), ...args);
+		console.log(color("%s: " + str), this.network.toUpperCase(), ...args);
 	}
-
-
 
 
 	/* --------------------------- Utility Functions ------------------------- */
