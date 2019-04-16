@@ -45,7 +45,7 @@ module.exports = class Watcher {
 		// handling printing ticks 
 		var timestamp = Date.now();
 		if(timestamp - this.prevTimestamp > this.options.tick_rate || this.debug){
-			this.print("Tick: %s", colors.blue, new Date().toLocaleString());
+			this.print("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
 			this.prevTimestamp = timestamp;
 		}
 
@@ -56,6 +56,8 @@ module.exports = class Watcher {
 		if(this.window_chain.start != 0) this.compareWindows(this.window_chain, new_window);
 
 		this.window_chain = new_window;
+
+		// call function again after refresh period
 		var watcher = this;
 		setTimeout(function(){watcher.tick()}, this.options.refresh_rate);
 	}
@@ -90,7 +92,7 @@ module.exports = class Watcher {
 			var i = latest;
 
 			// starting from the end, check if still up to date
-			while(lastBlock.hash != window.blocks[i].hash){
+			while(lastBlock.hash != new_window.blocks[i].hash){
 				// overwrite mismatched blocks
 				new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
 				this.print("MISMATCH: %d (Chain: %s vs Window: %s)", colors.red, i, lastBlock.hash, window.blocks[i].hash);
@@ -133,6 +135,7 @@ module.exports = class Watcher {
 		} else if (newWindow.end > oldWindow.end) {
 			startPoint = oldWindow.end;
 		} else {
+			// new window is somehow shorter??
 			this.print("Window length mismatch, Old:(%d-%d), New:(%d-%d)", colors.red, oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
 		}
 
