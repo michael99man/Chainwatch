@@ -53,7 +53,7 @@ module.exports = class Watcher {
 		var new_window = await this.updateWindow(this.window_chain);
 
 		// if not first window
-		if(this.window_chain.start != -1) this.compareWindows(window_chain, new_window);
+		if(this.window_chain.start != -1) this.compareWindows(this.window_chain, new_window);
 
 		this.window_chain = new_window;
 		var watcher = this;
