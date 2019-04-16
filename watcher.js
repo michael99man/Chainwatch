@@ -2,6 +2,8 @@ const config = require('./config.json');
 require('dotenv').config();
 var colors = require('colors');
 const Web3 = require('web3');
+var fs = require('fs');
+var util = require('util');
 
 /*********************************************************
 Watcher.js provides generalized engine logic for detecting
@@ -32,6 +34,10 @@ module.exports = class Watcher {
 
 		this.debug = (process.env.DEBUG == true);
 		this.fallback = (process.env.FALLBACK == true);
+
+		// create output streams
+		this.debugStream = fs.createWriteStream(__dirname + '/log/' + this.network + '_debug.log', {flags : 'w'});
+		this.outputStream = fs.createWriteStream(__dirname + '/log/' + this.network + '_out.log', {flags : 'w'});
 
 		// use an external fallback provider or local IPC endpoint	
 		var providerUrl = this.fallback ? this.options.fallback_provider : this.options.provider;
@@ -159,13 +165,19 @@ module.exports = class Watcher {
 	**********************************************************/
 
 	debugPrint(str,color, ...args){
-		if(!this.debug) return;
-
-		this.print(str, color, ...args);
+		let formatStr = "%s | %s | " + str;
+		if(this.debug) console.log(color(formatStr), this.network.toUpperCase(), this.getTimestring(), ...args);
+		this.debugStream.write(util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
 	}
 
 	print(str,color, ...args){
-		console.log(color("%s: " + str), this.network.toUpperCase(), ...args);
+		let formatStr = "%s | %s | " + str;
+		console.log(color(formatStr), this.network.toUpperCase(), this.getTimestring(), ...args);
+		this.outputStream.write(util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
+	}
+
+	getTimestring(){
+		return new Date().toLocaleString("en-US", {timeZone: "America/New_York"});
 	}
 
 
