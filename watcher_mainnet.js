@@ -1,7 +1,7 @@
 const config = require('./config.json');
 require('dotenv').config();
 var colors = require('colors');
-const network = "ropsten";
+const network = "mainnet";
 const options = config[network];
 
 const Web3 = require('web3');
