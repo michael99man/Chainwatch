@@ -53,7 +53,7 @@ module.exports = class Watcher {
 		var new_window = await this.updateWindow(this.window_chain);
 
 		// if not first window
-		if(this.window_chain.start != -1) this.compareWindows(this.window_chain, new_window);
+		if(this.window_chain.start != 0) this.compareWindows(this.window_chain, new_window);
 
 		this.window_chain = new_window;
 		var watcher = this;
@@ -126,7 +126,7 @@ module.exports = class Watcher {
 		// 
 		this.debugPrint("Comparing windows...", colors.blue);
 
-		var startPoint = -1;
+		var startPoint = 0;
 		if(oldWindow.end == newWindow.end){
 			// scan windows starting from the end
 			startPoint = oldWindow.end;
