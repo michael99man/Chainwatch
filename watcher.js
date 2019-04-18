@@ -91,14 +91,15 @@ module.exports = class Watcher {
 			}
 			this.print("Initialized with %d blocks", colors.green, Object.keys(new_window.blocks).length);
 		} else if(window.end == latest) {
-			new_window = window;
+			// deep copy
+			new_window = JSON.parse(JSON.stringify(object));
 			// Potential for a chain reorg (of the same length) here??
 
 			var lastBlock = await this.adapter.getBlock(latest);
 			var i = latest;
 
 			// starting from the end, check if still up to date
-			while(lastBlock.hash != new_window.blocks[i].hash){
+			while(lastBlock.hash != window.blocks[i].hash){
 				// overwrite mismatched blocks
 				new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
 				this.print("MISMATCH: %d (Chain: %s vs Window: %s)", colors.red, i, lastBlock.hash, window.blocks[i].hash);
