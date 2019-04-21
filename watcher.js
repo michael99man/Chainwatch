@@ -20,7 +20,7 @@ Adapters must implement the following:
 
 module.exports = class Watcher {
 
-	constructor(a){
+	constructor(a, logger){
 		this.adapter = a;
 		this.network = a.network;
 		this.options = config[this.network];
@@ -31,13 +31,10 @@ module.exports = class Watcher {
 			blocks: {}
 		};
 		this.prevTimestamp = 0;
+		this.logger = logger;
 
 		this.debug = (process.env.DEBUG == true);
 		this.fallback = (process.env.FALLBACK == true);
-
-		// create output streams
-		this.debugStream = fs.createWriteStream(__dirname + '/log/' + this.network + '_debug.log', {flags : 'w'});
-		this.outputStream = fs.createWriteStream(__dirname + '/log/' + this.network + '_out.log', {flags : 'w'});
 
 		// use an external fallback provider or local IPC endpoint	
 		var providerUrl = this.fallback ? this.options.fallback_provider : this.options.provider;
@@ -51,7 +48,7 @@ module.exports = class Watcher {
 		// handling printing ticks 
 		var timestamp = Date.now();
 		if(timestamp - this.prevTimestamp > this.options.tick_rate || this.debug){
-			this.print("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
+			this.debugPrint("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
 			this.prevTimestamp = timestamp;
 		}
 
@@ -92,7 +89,7 @@ module.exports = class Watcher {
 			this.print("Initialized with %d blocks", colors.green, Object.keys(new_window.blocks).length);
 		} else if(window.end == latest) {
 			// deep copy
-			new_window = JSON.parse(JSON.stringify(object));
+			new_window = JSON.parse(JSON.stringify(window));
 			// Potential for a chain reorg (of the same length) here??
 
 			var lastBlock = await this.adapter.getBlock(latest);
@@ -102,7 +99,7 @@ module.exports = class Watcher {
 			while(lastBlock.hash != window.blocks[i].hash){
 				// overwrite mismatched blocks
 				new_window.blocks[i] = {blockNo: i, miner: lastBlock.miner, hash: lastBlock.hash};
-				this.print("MISMATCH: %d (Chain: %s vs Window: %s)", colors.red, i, lastBlock.hash, window.blocks[i].hash);
+				this.debugPrint("MISMATCH: %d (Chain: %s vs Window: %s)", colors.red, i, lastBlock.hash, window.blocks[i].hash);
 				i--;
 				lastBlock = await this.adapter.getBlock(i);
 			}
@@ -130,31 +127,54 @@ module.exports = class Watcher {
 	}
 
 	compareWindows(oldWindow, newWindow){
-		// possibilities:
-		// windows are same length (same window.end) -> check last 
-		// 
 		this.debugPrint("Comparing windows...", colors.blue);
 
-		var startPoint = 0;
+		var startPoint = 0; // technically the last block to start scanning from
 		if(oldWindow.end == newWindow.end){
-			// scan windows starting from the end
+			// scan windows starting from the (same) end
 			startPoint = oldWindow.end;
 		} else if (newWindow.end > oldWindow.end) {
+			// scan windows starting from the end of the old window
 			startPoint = oldWindow.end;
 		} else {
-			// new window is somehow shorter??
+			// new window is somehow shorter? Almost certainly impossible due to GHOST
 			this.print("Window length mismatch, Old:(%d-%d), New:(%d-%d)", colors.red, oldWindow.start, oldWindow.end, newWindow.start, newWindow.end);
 		}
 
+		// Scanning previous blocks to see exactly when reorg happened
 		var i = startPoint;
 		while(oldWindow.blocks[i].hash != newWindow.blocks[i].hash){
-			this.print("Hash mismatch: (%s, %s)", colors.red, oldWindow.blocks[i].hash, newWindow.blocks[i].hash);
+			this.print("Hash mismatch: (Old: %s, New: %s)", colors.red, oldWindow.blocks[i].hash, newWindow.blocks[i].hash);
 			i--;
 		}
+		i+=1;
 
+		// LOG TO DB
+		if(i <= startPoint){
+			this.print("Blocks (%d-%d, total: %d) reorg'd!", colors.red, startPoint, i, (startPoint-i+1));
+			this.logger.logReorg(oldWindow, newWindow, i, startPoint);
+		}
 
-		// Scanning previous blocks to see exactly when reorg happened?
+		// look through new window for the concentration of miners
+		var latest = newWindow.end;
+		var confStart = latest - this.options.confRange + 1; 
+		var miners = {};
+		for(var i=confStart; i<=latest; i++){
+			var block = newWindow.blocks[latest-i];
+			var m = block.miner;
+			if (miners.hasOwnProperty(m)){
+				miners[m] = miners[m]+1;
+			} else {
+				miners[m] = 1;
+			}
+		}
 
+		// check if there's a miner over 51%
+		var max = Math.max.apply( null, Object.keys( obj ).map(function ( key ) { return obj[key]; }));
+		if(max >= this.options.confRange/2){
+			this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red,confStart, latest);
+			this.logger.logMinerDensity(newwindow, confStart, latest);
+		}
 	}
 
 	/*********************************************************
@@ -165,22 +185,22 @@ module.exports = class Watcher {
 	* Red: Errors
 	**********************************************************/
 
+
 	debugPrint(str,color, ...args){
 		let formatStr = "%s | %s | " + str;
 		if(this.debug) console.log(color(formatStr), this.network.toUpperCase(), this.getTimestring(), ...args);
-		this.debugStream.write(util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
+		this.logger.outputToStream(network, "debug", util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
 	}
 
 	print(str,color, ...args){
 		let formatStr = "%s | %s | " + str;
 		console.log(color(formatStr), this.network.toUpperCase(), this.getTimestring(), ...args);
-		this.outputStream.write(util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
+		this.logger.outputToStream(network, "output", util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
 	}
 
 	getTimestring(){
 		return new Date().toLocaleString("en-US", {timeZone: "America/New_York"});
 	}
-
 
 	/* --------------------------- Utility Functions ------------------------- */
 
