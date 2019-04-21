@@ -32,7 +32,7 @@ module.exports = class Watcher {
 		};
 		this.prevTimestamp = 0;
 		this.logger = logger;
-
+		this.logger.createOutputStreams(this.network);
 		this.debug = (process.env.DEBUG == true);
 		this.fallback = (process.env.FALLBACK == true);
 
@@ -160,7 +160,7 @@ module.exports = class Watcher {
 		var confStart = latest - this.options.confRange + 1; 
 		var miners = {};
 		for(var i=confStart; i<=latest; i++){
-			var block = newWindow.blocks[latest-i];
+			var block = newWindow.blocks[i];
 			var m = block.miner;
 			if (miners.hasOwnProperty(m)){
 				miners[m] = miners[m]+1;
@@ -170,10 +170,14 @@ module.exports = class Watcher {
 		}
 
 		// check if there's a miner over 51%
-		var max = Math.max.apply( null, Object.keys( obj ).map(function ( key ) { return obj[key]; }));
-		if(max >= this.options.confRange/2){
-			this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red,confStart, latest);
-			this.logger.logMinerDensity(newwindow, confStart, latest);
+		for(var m in miners){
+			if(miners.hasOwnProperty(m)){
+				if(miners[m] >= this.options.confRange/2){
+					this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red,confStart, latest, m);
+					this.logger.logMinerDensity(newWindow, confStart, latest, m);
+					return;
+				}
+			}
 		}
 	}
 
@@ -189,14 +193,15 @@ module.exports = class Watcher {
 	debugPrint(str,color, ...args){
 		let formatStr = "%s | %s | " + str;
 		if(this.debug) console.log(color(formatStr), this.network.toUpperCase(), this.getTimestring(), ...args);
-		this.logger.outputToStream(network, "debug", util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
+		this.logger.outputToStream(this.network, "debug", util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
 	}
 
 	print(str,color, ...args){
 		let formatStr = "%s | %s | " + str;
 		console.log(color(formatStr), this.network.toUpperCase(), this.getTimestring(), ...args);
-		this.logger.outputToStream(network, "output", util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
+		this.logger.outputToStream(this.network, "output", util.format(formatStr, this.network.toUpperCase(), this.getTimestring(), ...args) + '\n');
 	}
+
 
 	getTimestring(){
 		return new Date().toLocaleString("en-US", {timeZone: "America/New_York"});

@@ -1,8 +1,9 @@
 var MongoClient = require('mongodb').MongoClient;
+var fs = require('fs');
 var mongodb;
 
 
-const url = "mongodb://localhost/chainwatch";
+const url = "mongodb://localhost:27017/";
 
 /* 
 This class handles DB logging, as well as detailed logs to both debug and output files
@@ -10,24 +11,23 @@ This class handles DB logging, as well as detailed logs to both debug and output
 module.exports = class Logger {
 
 	constructor(){
-
 		this.streams = {};
-
+		var that = this;
 		MongoClient.connect(url, {  
  			poolSize: 5
   			// other options can go here
-		},function(err, db) {
-   			this.mongodb=db;
+		},function(err, client) {
+   			that.mongodb=client.db('chainwatch');
    			console.log("Connected to MongoDB");
-    	});
+    		});
 	}
 
 
 	createOutputStreams(network){
 		console.log("Created output streams for network: " + network);
 		// create output streams
-		dStream = fs.createWriteStream(__dirname + '/log/' + network + '_debug.log', {flags : 'a'});
-		oStream = fs.createWriteStream(__dirname + '/log/' + network + '_out.log', {flags : 'a'});
+		var dStream = fs.createWriteStream(__dirname + '/log/' + network + '_debug.log', {flags : 'a'});
+		var oStream = fs.createWriteStream(__dirname + '/log/' + network + '_out.log', {flags : 'a'});
 
 		this.streams[network] = {"debug": dStream, "output": oStream};
 	}
@@ -40,11 +40,11 @@ module.exports = class Logger {
 		* blocks:{blockNo: {forkHash, canonicalHash}}
 		*/
 		var logObj = {
-			numBlocks = end-start+1,
-			detected: getTimestring(),
+			numBlocks: end-start+1,
+			detected: this.getTimestring(),
 			start: start,
 			end: end,
-			blocks = {}
+			blocks: {}
 		}
 
 		// add blocks to logObj
@@ -56,21 +56,29 @@ module.exports = class Logger {
 			logObj.blocks[i] = b;
 		}
 
-		db.collection('reorg_events').insertOne(logObj);
+		this.mongodb.collection('reorg_events').insertOne(logObj);
 	}
 
 
-	async logMinerDensity(window, start, end){
+	async logMinerDensity(window, start, end, miner){
 		var logObj = {
-			numBlocks = end-start+1,
-			blocks = {}
+			detected: this.getTimestring(),
+			miner: miner,
+			numBlocks:end-start+1,
+			start: start,
+			end: end,
+			blocks:{}
 		}
 
 		for(var i=start;i<=end; i++){
 			logObj.blocks[i] = window.blocks[i];
 		}
-
-		db.collection('51_events').insertOne(logObj);
+		// don't relog same event
+		var exists = await this.mongodb.collection('density_events').count({end: {$gte: start, $lte: end}}, {limit:1});
+		console.log(exists);
+		if(exists == 0){
+			this.mongodb.collection('density_events').insertOne(logObj);
+		}
 	}
 
 

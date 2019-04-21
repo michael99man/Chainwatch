@@ -4,7 +4,8 @@
   "description": "A webapp that detects anomalous blockchain activity.",
   "main": "index.js",
   "scripts": {
-    "test": "ls"
+    "test": "ls",
+    "lint": "eslint --ignore-path .gitignore ."
   },
   "keywords": [
     "blockchain",
@@ -18,6 +19,11 @@
     "colors": "^1.3.3",
     "dotenv": "^7.0.0",
     "npm": "^6.9.0",
-    "web3": "^1.0.0-beta.52"
+    "web3": "^1.0.0-beta.52",
+    "mongodb": "^2.2.33"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-strongloop": "^2.1.0"
   }
 }
