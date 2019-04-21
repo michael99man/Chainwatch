@@ -154,7 +154,7 @@ module.exports = class Watcher {
 		// Reorg occurred, log to DB
 		if(i <= startPoint){
 			this.print("Blocks (%d-%d, total: %d) reorg'd!", colors.red, startPoint, i, (startPoint-i+1));
-			await this.logger.logReorg(oldWindow, newWindow, i, startPoint);
+			await this.logger.logReorg(this.network, oldWindow, newWindow, i, startPoint);
 		}
 
 		// look through new window for the concentration of miners
@@ -175,8 +175,8 @@ module.exports = class Watcher {
 		for(var m in miners){
 			if(miners.hasOwnProperty(m)){
 				if(miners[m] >= this.options.confRange/2){
-					this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red,confStart, latest, m);
-					await this.logger.logMinerDensity(newWindow, confStart, latest, m);
+					this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red, confStart, latest, m);
+					await this.logger.logMinerDensity(this.network, newWindow, confStart, latest, m, miners);
 					return;
 				}
 			}

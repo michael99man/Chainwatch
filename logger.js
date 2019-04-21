@@ -16,13 +16,16 @@ module.exports = class Logger {
 
 	async initDB(){
 		var that = this;
-		MongoClient.connect(url, {  
- 			poolSize: 5
-  			// other options can go here
-		}, function(err, client) {
-   			that.mongodb=client.db('chainwatch');
-   			console.log("Connected to MongoDB");
-    	});
+		return new Promise((resolve, reject) => {
+			MongoClient.connect(url, {  
+	 			poolSize: 5
+	  			// other options can go here
+			}, function(err, client) {
+	   			that.mongodb=client.db('chainwatch');
+	   			console.log("Connected to MongoDB");
+	   			resolve();
+	    	});
+	    });
 	}
 
 
@@ -35,7 +38,7 @@ module.exports = class Logger {
 		this.streams[network] = {"debug": dStream, "output": oStream};
 	}
 
-	async logReorg(oldWindow, newWindow, start, end){
+	async logReorg(network, oldWindow, newWindow, start, end){
 		/* DATA SCHEMA
 		* numBlocks
 		* start
@@ -44,6 +47,7 @@ module.exports = class Logger {
 		*/
 		var logObj = {
 			numBlocks: end-start+1,
+			network: network,
 			detected: this.getTimestring(),
 			start: start,
 			end: end,
@@ -63,14 +67,15 @@ module.exports = class Logger {
 	}
 
 
-	async logMinerDensity(window, start, end, miner){
+	async logMinerDensity(network, window, start, end, maj, miners){
 		var logObj = {
 			detected: this.getTimestring(),
-			miner: miner,
+			network: network,
+			majorityMiner: maj,
 			numBlocks:end-start+1,
 			start: start,
 			end: end,
-			blocks:{}
+			miners: miners
 		}
 
 		for(var i=start;i<=end; i++){
