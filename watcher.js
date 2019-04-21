@@ -56,7 +56,9 @@ module.exports = class Watcher {
 		var new_window = await this.updateWindow(this.window_chain);
 
 		// if not first window
-		if(this.window_chain.start != 0) this.compareWindows(this.window_chain, new_window);
+		if(this.window_chain.start != 0){
+			await this.compareWindows(this.window_chain, new_window);
+		}
 
 		this.window_chain = new_window;
 
@@ -126,7 +128,7 @@ module.exports = class Watcher {
 		return new_window;
 	}
 
-	compareWindows(oldWindow, newWindow){
+	async compareWindows(oldWindow, newWindow){
 		this.debugPrint("Comparing windows...", colors.blue);
 
 		var startPoint = 0; // technically the last block to start scanning from
@@ -149,10 +151,10 @@ module.exports = class Watcher {
 		}
 		i+=1;
 
-		// LOG TO DB
+		// Reorg occurred, log to DB
 		if(i <= startPoint){
 			this.print("Blocks (%d-%d, total: %d) reorg'd!", colors.red, startPoint, i, (startPoint-i+1));
-			this.logger.logReorg(oldWindow, newWindow, i, startPoint);
+			await this.logger.logReorg(oldWindow, newWindow, i, startPoint);
 		}
 
 		// look through new window for the concentration of miners
@@ -174,7 +176,7 @@ module.exports = class Watcher {
 			if(miners.hasOwnProperty(m)){
 				if(miners[m] >= this.options.confRange/2){
 					this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red,confStart, latest, m);
-					this.logger.logMinerDensity(newWindow, confStart, latest, m);
+					await this.logger.logMinerDensity(newWindow, confStart, latest, m);
 					return;
 				}
 			}
@@ -209,7 +211,8 @@ module.exports = class Watcher {
 
 	/* --------------------------- Utility Functions ------------------------- */
 
-	/*
+	/* TODO: readd these to DB!, statistics table
+
 	async function calculateDistribution(numBlocks){
 		let miners = {};
 

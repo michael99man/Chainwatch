@@ -12,14 +12,17 @@ module.exports = class Logger {
 
 	constructor(){
 		this.streams = {};
+	}
+
+	async initDB(){
 		var that = this;
 		MongoClient.connect(url, {  
  			poolSize: 5
   			// other options can go here
-		},function(err, client) {
+		}, function(err, client) {
    			that.mongodb=client.db('chainwatch');
    			console.log("Connected to MongoDB");
-    		});
+    	});
 	}
 
 
