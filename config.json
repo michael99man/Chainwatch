@@ -4,7 +4,7 @@
 		"provider": "http://localhost:8545",
 		"window_size": 200,
 		"refresh_rate": 15000,
-		"tick_rate": 1800000,
+		"tick_rate": 600000,
 		"fallback_provider": "wss://ropsten.infura.io/ws",
 		"confRange": 50,
 		"sampleSize": 30
@@ -14,7 +14,7 @@
 		"provider": "http://localhost:1738",
 		"window_size": 200,
 		"refresh_rate": 15000,
-		"tick_rate": 1800000,
+		"tick_rate": 600000,
 		"fallback_provider": "wss://mainnet.infura.io/ws",
 		"confRange": 50,
 		"sampleSize": 30

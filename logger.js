@@ -63,7 +63,7 @@ module.exports = class Logger {
 			logObj.blocks[i] = b;
 		}
 
-		this.mongodb.collection('reorg_events').insertOne(logObj);
+		await this.mongodb.collection('reorg_events').insertOne(logObj);
 	}
 
 
@@ -81,8 +81,20 @@ module.exports = class Logger {
 		// don't relog same event
 		var exists = await this.mongodb.collection('density_events').count({end: {$gte: start, $lte: end}}, {limit:1});
 		if(exists == 0){
-			this.mongodb.collection('density_events').insertOne(logObj);
+			await this.mongodb.collection('density_events').insertOne(logObj);
 		}
+	}
+
+	async logStatistics(network, bt, diff, hashrate){
+		var logObj = {
+			network: network,
+			timestamp: this.getTimestring(),
+			blockTime:bt,
+			difficulty: diff,
+			hashRate: hashrate 
+		}
+		
+		await this.mongodb.collection('statistics').insertOne(logObj);
 	}
 
 

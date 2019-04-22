@@ -49,6 +49,7 @@ module.exports = class Watcher {
 			this.debugPrint("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
 			this.prevTimestamp = timestamp;
 
+			// get network statistics and log them to the DB
 			this.getNetworkStats(this.options.sampleSize);
 		}
 
@@ -211,20 +212,14 @@ module.exports = class Watcher {
 
 	/* --------------------------- Utility Functions ------------------------- */
 
-	/* TODO: readd these to DB!, statistics table */
-	async getNetworkStats(
-	        sampleSize //!< [in] Larger n gives more accurate numbers but with longer latency.
-	    ) {
+	/* TODO: Add uncle counting */
+	async getNetworkStats(sampleSize) {
 	    let blockNum = await this.adapter.getBlockNumber(); // Save this value to atomically get a block number.
 	    let newestBlock = await this.adapter.getBlock(blockNum);
 		let olderBlock = await this.adapter.getBlock(blockNum - sampleSize);
 	    let blockTime = (newestBlock.timestamp - olderBlock.timestamp) / sampleSize;
 	    let difficulty = newestBlock.difficulty; // You can sum up the last n-blocks and average; this is mathematically sound.
 
-	    console.log({
-	      "blocktime": blockTime,
-	      "difficulty": difficulty,
-	      "hashrate": difficulty / blockTime,
-	    });
-	}
+	    await this.logger.logStatistics(this.network, blockTime, difficulty, Math.round(difficulty/blockTime));
+	}	
 }
