@@ -1,7 +1,7 @@
 var Watcher = require("./watcher.js");
 var Logger = require("./logger.js");
-var Ropsten_Adapter = require("./ropsten_adapter.js");
-var Ethereum_Adapter = require("./ethereum_adapter.js");
+var Ropsten_Adapter = require("./adapters/ropsten_adapter.js");
+var Ethereum_Adapter = require("./adapters/ethereum_adapter.js");
 
 var logger = new Logger();
 logger.initDB().then(()=>{

@@ -1,4 +1,0 @@
-BTC: 2
-ETH: 30
-LTC: 4
-BCHABC: 2
