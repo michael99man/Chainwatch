@@ -90,6 +90,7 @@ module.exports = class Logger {
 			network: network,
 			timestamp: this.getTimestring(),
 			blockTime: bt,
+			hashrate: hashrate,
 			difficulty: diff,
 			miners: miners 
 		}
