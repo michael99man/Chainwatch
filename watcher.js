@@ -220,6 +220,16 @@ module.exports = class Watcher {
 	    let blockTime = (newestBlock.timestamp - olderBlock.timestamp) / sampleSize;
 	    let difficulty = newestBlock.difficulty; // You can sum up the last n-blocks and average; this is mathematically sound.
 
-	    await this.logger.logStatistics(this.network, blockTime, difficulty, Math.round(difficulty/blockTime));
+	    var miners = {};
+		for(var i=blockNum-sampleSize+1; i<=blockNum; i++){
+			var block = this.window_chain.blocks[i];
+			var m = block.miner;
+			if (miners.hasOwnProperty(m)){
+				miners[m] = miners[m]+1;
+			} else {
+				miners[m] = 1;
+			}
+		}
+	    await this.logger.logStatistics(this.network, blockTime, difficulty, Math.round(difficulty/blockTime), miners);
 	}	
 }

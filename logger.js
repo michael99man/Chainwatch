@@ -85,13 +85,13 @@ module.exports = class Logger {
 		}
 	}
 
-	async logStatistics(network, bt, diff, hashrate){
+	async logStatistics(network, bt, diff, hashrate, miners){
 		var logObj = {
 			network: network,
 			timestamp: this.getTimestring(),
-			blockTime:bt,
+			blockTime: bt,
 			difficulty: diff,
-			hashRate: hashrate 
+			miners: miners 
 		}
 		
 		await this.mongodb.collection('statistics').insertOne(logObj);
