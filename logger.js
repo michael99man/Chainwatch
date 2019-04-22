@@ -46,8 +46,8 @@ module.exports = class Logger {
 		* blocks:{blockNo: {forkHash, canonicalHash}}
 		*/
 		var logObj = {
-			numBlocks: end-start+1,
 			network: network,
+			numBlocks: end-start+1,
 			detected: this.getTimestring(),
 			start: start,
 			end: end,
@@ -69,8 +69,8 @@ module.exports = class Logger {
 
 	async logMinerDensity(network, window, start, end, maj, miners){
 		var logObj = {
-			detected: this.getTimestring(),
 			network: network,
+			detected: this.getTimestring(),
 			majorityMiner: maj,
 			numBlocks:end-start+1,
 			start: start,
@@ -78,12 +78,8 @@ module.exports = class Logger {
 			miners: miners
 		}
 
-		for(var i=start;i<=end; i++){
-			logObj.blocks[i] = window.blocks[i];
-		}
 		// don't relog same event
 		var exists = await this.mongodb.collection('density_events').count({end: {$gte: start, $lte: end}}, {limit:1});
-		console.log(exists);
 		if(exists == 0){
 			this.mongodb.collection('density_events').insertOne(logObj);
 		}
