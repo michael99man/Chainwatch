@@ -7,7 +7,7 @@
 		"tick_rate": 600000,
 		"fallback_provider": "wss://ropsten.infura.io/ws",
 		"confRange": 50,
-		"sampleSize": 30
+		"sampleSize": 100
 	},
 
 	"ethereum": {
@@ -17,6 +17,6 @@
 		"tick_rate": 600000,
 		"fallback_provider": "wss://mainnet.infura.io/ws",
 		"confRange": 50,
-		"sampleSize": 30
+		"sampleSize": 100
 	}
 }
