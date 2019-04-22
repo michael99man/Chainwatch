@@ -26,6 +26,8 @@ module.exports = class Ethereum {
 		block.blockNo = n;
 		block.miner = b.miner;
 		block.hash = b.hash;
+		block.hash = b.timestamp;
+		block.difficulty = b.difficulty;
 		return block;
 	}
 }

@@ -1,8 +1,6 @@
 const config = require('./config.json');
 require('dotenv').config();
 var colors = require('colors');
-const Web3 = require('web3');
-var fs = require('fs');
 var util = require('util');
 
 /*********************************************************
@@ -50,6 +48,8 @@ module.exports = class Watcher {
 		if(timestamp - this.prevTimestamp > this.options.tick_rate || this.debug){
 			this.debugPrint("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
 			this.prevTimestamp = timestamp;
+
+			this.getNetworkStats(this.options.sampleSize);
 		}
 
 		// update the window, receiving a new object
@@ -211,48 +211,20 @@ module.exports = class Watcher {
 
 	/* --------------------------- Utility Functions ------------------------- */
 
-	/* TODO: readd these to DB!, statistics table
-
-	async function calculateDistribution(numBlocks){
-		let miners = {};
-
-		const latest = await web3.eth.getBlockNumber();
-		console.log("Block Height: " + latest);
-
-		for(var i=0; i<numBlocks; i++){
-			let blockNo = latest-i;
-			let block = await web3.eth.getBlock(blockNo);	
-
-			let miner = block.miner;
-
-			// tally the miners
-			if(miner in miners){
-				miners[miner]++;
-			} else {
-				miners[miner] = 1;
-			}
-
-			console.log(blockNo, miner);
-		}
-
-		console.log(miners);
-		return miners;
-	}
-
-	async function getNetworkStats(
-	        sampleSize //!< [in] Larger n give more accurate numbers but with longer latency.
+	/* TODO: readd these to DB!, statistics table */
+	async getNetworkStats(
+	        sampleSize //!< [in] Larger n gives more accurate numbers but with longer latency.
 	    ) {
-	    blockNum = await web3.eth.getBlockNumber(); // Save this value to atomically get a block number.
-	    console.log(blockNum);
-	    recentBlock = await web3.eth.getBlock(blockNum);
-	    olderBlock = await web3.eth.getBlock(blockNum - sampleSize);
-	    blockTime = (recentBlock.timestamp - olderBlock.timestamp) / sampleSize;
-	    difficulty = recentBlock.difficulty; // You can sum up the last n-blocks and average; this is mathematically sound.
+	    let blockNum = await this.adapter.getBlockNumber(); // Save this value to atomically get a block number.
+	    let newestBlock = await this.adapter.getBlock(blockNum);
+		let olderBlock = await this.adapter.getBlock(blockNum - sampleSize);
+	    let blockTime = (newestBlock.timestamp - olderBlock.timestamp) / sampleSize;
+	    let difficulty = newestBlock.difficulty; // You can sum up the last n-blocks and average; this is mathematically sound.
 
 	    console.log({
 	      "blocktime": blockTime,
 	      "difficulty": difficulty,
 	      "hashrate": difficulty / blockTime,
 	    });
-	}*/
+	}
 }
