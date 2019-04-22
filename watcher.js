@@ -222,7 +222,13 @@ module.exports = class Watcher {
 
 	    var miners = {};
 		for(var i=blockNum-sampleSize+1; i<=blockNum; i++){
-			var block = this.window_chain.blocks[i];
+			var block;
+			if(this.window_chain.blocks.hasOwnProperty(i)){
+				block = this.window_chain.blocks[i];
+			} else {
+				block = await this.adapter.getBlock(i);
+			}
+			
 			var m = block.miner;
 			if (miners.hasOwnProperty(m)){
 				miners[m] = miners[m]+1;
