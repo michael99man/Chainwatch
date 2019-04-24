@@ -45,7 +45,7 @@ module.exports = class Watcher {
 	async tick(){
 		// handling printing ticks 
 		var timestamp = Date.now();
-		if(timestamp - this.prevTimestamp > this.options.tick_rate || this.debug){
+		if(timestamp - this.prevTimestamp > this.options.stats_collection_rate || this.debug){
 			this.debugPrint("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
 			this.prevTimestamp = timestamp;
 
