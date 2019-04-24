@@ -84,13 +84,22 @@ module.exports = class Watcher {
 
 		const latest = await this.adapter.getBlockNumber();
 
-		// update window
+		// updated window
 		var new_window = {
 			start: latest-this.options.window_size+1,
 			end: latest,
 			blocks: {}
-		};
+		};	
 
+		// naive implementation
+		for(var i=0; i<this.options.window_size; i++){
+			let blockNo = latest-i;
+			let block = await this.adapter.getBlock(blockNo);
+			new_window.blocks[blockNo] = {blockNo: blockNo, miner: block.miner, hash: block.hash};
+		}
+		
+		return new_window;
+/*
 		if(window.start == 0){
 			this.print("Initializing window of %d blocks", colors.green, this.options.window_size);
 			// form window for entire range
@@ -118,9 +127,16 @@ module.exports = class Watcher {
 			}
 
 			this.debugPrint("Window up-to-date (%d-%d)", colors.green, window.start, window.end);
-		} else {
+		} else {	
+			// DEAL WITH REORG CASE!
 			// Chain has grown, update window by copying old blocks first
 			this.debugPrint("Shifting window to: (%d-%d)", colors.green, new_window.start,new_window.end);
+
+			//var startHash = await this.adapter.getBlock(new_window.start)
+
+			//if(window.end > new_window.start){
+
+			//}
 
 			var numCopied = 0;
 			for(var blockNo=new_window.start; blockNo<=new_window.end; blockNo++){
@@ -137,6 +153,7 @@ module.exports = class Watcher {
 			this.debugPrint("Cloned %d blocks", colors.green, numCopied);
 		}
 		return new_window;
+		*/
 	}
 
 	async compareWindows(oldWindow, newWindow){
