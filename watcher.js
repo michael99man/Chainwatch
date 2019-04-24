@@ -224,13 +224,14 @@ module.exports = class Watcher {
 
 	/* TODO: Add uncle counting */
 	async getNetworkStats(sampleSize) {
+		this.print("Collecting statistics", colors.blue);
 	    let blockNum = await this.adapter.getBlockNumber(); // Save this value to atomically get a block number.
 	    let newestBlock = await this.adapter.getBlock(blockNum);
 		let olderBlock = await this.adapter.getBlock(blockNum - sampleSize);
 	    let blockTime = (newestBlock.timestamp - olderBlock.timestamp) / sampleSize;
 	    let difficulty = newestBlock.difficulty; // You can sum up the last n-blocks and average; this is mathematically sound.
 
-	    var startBlock = blockNum-sampleSize+1；
+	    var startBlock = blockNum-sampleSize+1;
 	    var miners = {};
 		for(var i=startBlock; i<=blockNum; i++){
 			var block;
