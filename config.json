@@ -4,19 +4,17 @@
 		"provider": "http://localhost:8545",
 		"window_size": 200,
 		"refresh_rate": 15000,
-		"stats_collection_rate": 300000,
+		"stats_collection_rate": 20,
 		"fallback_provider": "wss://ropsten.infura.io/ws",
-		"confRange": 40,
-		"sampleSize": 20
+		"confRange": 40
 	},
 
 	"ethereum": {
 		"provider": "http://localhost:1738",
 		"window_size": 200,
 		"refresh_rate": 15000,
-		"stats_collection_rate": 300000,
+		"stats_collection_rate": 20,
 		"fallback_provider": "wss://mainnet.infura.io/ws",
-		"confRange": 40,
-		"sampleSize": 20
+		"confRange": 40
 	}
 }

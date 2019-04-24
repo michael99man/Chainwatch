@@ -33,6 +33,7 @@ module.exports = class Watcher {
 		this.logger.createOutputStreams(this.network);
 		this.debug = (process.env.DEBUG == true);
 		this.fallback = (process.env.FALLBACK == true);
+		this.statsBlockHeight = 0;
 
 		// use an external fallback provider or local IPC endpoint	
 		var providerUrl = this.fallback ? this.options.fallback_provider : this.options.provider;
@@ -45,13 +46,22 @@ module.exports = class Watcher {
 	async tick(){
 		// handling printing ticks 
 		var timestamp = Date.now();
+
+		var blockHeight = await this.adapter.getBlockNumber();
+		// collect stats every *20* blocks (5 minutes)
+		if(blockHeight - this.statsBlockHeight >= this.options.stats_collection_rate){
+			this.statsBlockHeight = blockHeight;
+			this.getNetworkStats(this.options.stats_collection_rate);
+		}
+
+			/*
 		if(timestamp - this.prevTimestamp > this.options.stats_collection_rate || this.debug){
 			this.debugPrint("Tick: %s", colors.blue, new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
 			this.prevTimestamp = timestamp;
 
 			// get network statistics and log them to the DB
 			this.getNetworkStats(this.options.sampleSize);
-		}
+		}*/
 
 		// update the window, receiving a new object
 		var new_window = await this.updateWindow(this.window_chain);
@@ -176,7 +186,7 @@ module.exports = class Watcher {
 		for(var m in miners){
 			if(miners.hasOwnProperty(m)){
 				if(miners[m] >= this.options.confRange/2){
-					this.print("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red, confStart, latest, m);
+					this.debugPrint("Over 51% miner density for blocks (%d-%d) for miner %s", colors.red, confStart, latest, m);
 					await this.logger.logMinerDensity(this.network, newWindow, confStart, latest, m, miners);
 					return;
 				}
@@ -220,8 +230,9 @@ module.exports = class Watcher {
 	    let blockTime = (newestBlock.timestamp - olderBlock.timestamp) / sampleSize;
 	    let difficulty = newestBlock.difficulty; // You can sum up the last n-blocks and average; this is mathematically sound.
 
+	    var startBlock = blockNum-sampleSize+1；
 	    var miners = {};
-		for(var i=blockNum-sampleSize+1; i<=blockNum; i++){
+		for(var i=startBlock; i<=blockNum; i++){
 			var block;
 			if(this.window_chain.blocks.hasOwnProperty(i)){
 				block = this.window_chain.blocks[i];
@@ -236,6 +247,6 @@ module.exports = class Watcher {
 				miners[m] = 1;
 			}
 		}
-	    await this.logger.logStatistics(this.network, blockTime, difficulty, Math.round(difficulty/blockTime), miners);
+	    await this.logger.logStatistics(this.network, startBlock, blockNum, blockTime, difficulty, Math.round(difficulty/blockTime), miners);
 	}	
 }

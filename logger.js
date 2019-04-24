@@ -85,10 +85,12 @@ module.exports = class Logger {
 		}
 	}
 
-	async logStatistics(network, bt, diff, hashrate, miners){
+	async logStatistics(network, startBlock, endBlock, bt, diff, hashrate, miners){
 		var logObj = {
 			network: network,
 			timestamp: this.getTimestring(),
+			startBlock: startBlock,
+			endBlock: endBlock,
 			blockTime: bt,
 			hashrate: hashrate,
 			difficulty: diff,
