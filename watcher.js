@@ -242,7 +242,7 @@ module.exports = class Watcher {
 
 	/* TODO: Add uncle counting */
 	async getNetworkStats(sampleSize) {
-		this.print("Collecting statistics", colors.blue);
+		this.debugPrint("Collecting statistics", colors.blue);
 	    let blockNum = await this.adapter.getBlockNumber(); // Save this value to atomically get a block number.
 	    let newestBlock = await this.adapter.getBlock(blockNum);
 		let olderBlock = await this.adapter.getBlock(blockNum - sampleSize);
