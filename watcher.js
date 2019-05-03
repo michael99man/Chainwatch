@@ -174,7 +174,7 @@ module.exports = class Watcher {
 		// Scanning previous blocks to see exactly when reorg happened
 		var i = startPoint;
 		while(oldWindow.blocks[i].hash != newWindow.blocks[i].hash){
-			this.print("Hash mismatch: (Old: %s, New: %s)", colors.red, oldWindow.blocks[i].hash, newWindow.blocks[i].hash);
+			this.print("Hash mismatch: (Old: %s, New: %s) at position %d out of (%d, %d)", colors.red, oldWindow.blocks[i].hash, newWindow.blocks[i].hash, i, oldWindow.end, newWindow.end);
 			i--;
 		}
 		i+=1;
@@ -186,6 +186,7 @@ module.exports = class Watcher {
 		}
 
 		// look through new window for the concentration of miners
+
 		var latest = newWindow.end;
 		var confStart = latest - this.options.confRange + 1; 
 		var miners = {};
