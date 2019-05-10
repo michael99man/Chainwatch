@@ -8,6 +8,11 @@
 <li><span style="font-weight: bold">Tracking miner hashrate share:</span> Chainwatch tracks the estimated hashrate of each miner over time, flagging miners that gain a majority hashrate.</li>
 </ol>
 
+<h2 style="font-weight: bold" class="p-0 m-1">Implementation Diagram</h2>
+<p align="center">
+<img src="http://chainwatch.info/resources/Chainwatch.png" width='60%' align='center'></img>
+</p>
+
 <h2 style="font-weight: bold" class="p-0 m-1">Princeton Independent Work Poster</h2>
 
 <img src="http://chainwatch.info/resources/Poster.png"></img>
