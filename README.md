@@ -1,5 +1,5 @@
 <h2 style="font-weight: bold" class="p-0 m-1">What is Chainwatch?</h2>
-<p class="m-1 pb-2">Chainwatch is real-time blockchain network monitoring utility. Through chain reorganization detection and network statistics analysis, Chainwatch analyzes blockchain networks for attempted 51% attacks. Check out the Chainwatch Dashboard (source code <a href="https://github.com/michael99man/Chainwatch-Dashboard">here</a>) at <a href="http://chainwatch.info">http://chainwatch.info</a></p>
+<p class="m-1 pb-2">Chainwatch is real-time blockchain network monitoring utility. Through chain reorganization detection and network statistics analysis, Chainwatch analyzes blockchain networks for attempted 51% attacks. Check out the Chainwatch Dashboard (source code <a href="https://github.com/michael99man/Chainwatch-Dashboard">here</a>) at <a href="http://chainwatch.info">http://chainwatch.info</a>. Read the Chainwatch research paper <a href="http://chainwatch.info/resources/Chainwatch_Paper.pdf">here</a>.</p>
 
 <h2 style="font-weight: bold" class="p-0 m-1">Detection Strategies:</h2>
 <ol>
